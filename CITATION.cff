@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the accompanying article."
+title: "aztec-diagonal-defects: exact computations for diagonal defect tiles in Aztec-diamond dimer coverings"
+authors:
+  - family-names: Won
+    given-names: Changyeon
+    affiliation: "Department of Physics, Kyung Hee University"
+    email: cywon@khu.ac.kr
+version: 1.0.0
+date-released: 2026-09-24
+license: MIT
