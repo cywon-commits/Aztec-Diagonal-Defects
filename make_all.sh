@@ -13,3 +13,4 @@ python scripts/07_k2.py
 python scripts/08_thermodynamics.py
 python scripts/09_schematics.py
 python scripts/10_verify_proofs.py --nmax 10
+python scripts/11_placement_B.py

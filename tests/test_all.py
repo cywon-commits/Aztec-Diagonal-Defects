@@ -107,3 +107,27 @@ def test_thermo_thresholds_concave():
     c = pfaffian.generating_polynomial(aztec(7))
     d, T, concave = thermo.thresholds(c)
     assert concave and T[0] < T[1] < T[2]
+
+
+def test_placement_parity_and_B_half_step():
+    assert len(boundary.boundary_tiles(9, 0)) > 0 and len(boundary.boundary_tiles(8, 0)) == 0
+    assert len(boundary.boundary_tiles(8, 1)) > 0 and len(boundary.boundary_tiles(9, 1)) == 0
+    for m in (1, 2):
+        a = pfaffian.generating_polynomial(aztec(2 * m + 1, 1, 0)); b = pfaffian.generating_polynomial(aztec(2 * m, 1, 0))
+        assert a == [2 ** (2 * m + 1) * x for x in b]
+
+
+@pytest.mark.parametrize('n', [4, 6])
+def test_theorem2_placement_B(n):
+    R = aztec(n, 1, 0); E = boundary_edges(n, 1); c0 = 2 ** (n * (n + 1) // 2)
+    T = boundary.boundary_tiles(n, 1); Bs = [t for t in T if t[0] in ('NE', 'SW')]; Ws = [t for t in T if t[0] in ('SE', 'NW')]
+    for k in (1, 2):
+        for Bp in itertools.combinations(Bs, k):
+            for Wp in itertools.combinations(Ws, k):
+                removed = {E[e][s + d] for (e, s) in Bp + Wp for d in (0, 1)}
+                assert kasteleyn.count_tilings(R - removed) * 2 ** (2 * k * n) == c0 * boundary.det_formula(n, Bp, Wp)
+
+
+def test_k1_outer_matches_placement_A_total():
+    for n in (21, 41):
+        assert abs(boundary.k1_outer(n, 0)['ln_c1_over_c0'] - boundary.k1_outer_total(n)['ln_c1_over_c0']) < 1e-12

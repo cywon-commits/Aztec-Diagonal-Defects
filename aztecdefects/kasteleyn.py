@@ -35,9 +35,9 @@ def count_tilings(cells):
     return abs(int(flint.fmpz_mat(N, N, [int(v) for v in K.ravel()]).det()))
 
 
-def k1_weights_float(n):
+def k1_weights_float(n, ox=0):
     """All k=1 pair weights J[B, W] = c_1(B,W)/c_0 in double precision (reliable for n <~ 50)."""
-    cells = aztec(n); Bl, Wh, bi, wi, K = bipartite_K(cells)
+    cells = aztec(n, ox, 0); Bl, Wh, bi, wi, K = bipartite_K(cells)
     T = diagonal_tiles(cells); Bt = [t for t in T if t[2] == 'B']; Wt = [t for t in T if t[2] == 'W']
     G = np.linalg.inv(K.astype(float))           # G[w, b]
     b1 = np.array([bi[t[0]] for t in Bt]); b2 = np.array([bi[t[1]] for t in Bt])
@@ -73,7 +73,7 @@ def solve_banded_mod(K, rhs_rows, p):
     return E
 
 
-def k1_weights_exact(n, D=6, verbose=True):
+def k1_weights_exact(n, D=6, verbose=True, ox=0):
     """Exact k=1 pair weights for all B and W tiles within `D` layers of the boundary.
 
     Returns (logJ, cB, cW) with logJ[B, W] = ln(c_1(B,W)/c_0) (exact up to the final
@@ -81,10 +81,10 @@ def k1_weights_exact(n, D=6, verbose=True):
     <= 2^{2n+O(1)}; with s = 2n + 8 the numbers 2^s c_1/c_0 are integers,
     reconstructed from primes < 2^26 (products stay < 2^63 in the banded solver).
     """
-    cells = aztec(n); Bl, Wh, bi, wi, K = bipartite_K(cells)
+    cells = aztec(n, ox, 0); Bl, Wh, bi, wi, K = bipartite_K(cells)
     T = diagonal_tiles(cells)
-    Bt = [t for t in T if t[2] == 'B' and depth(tile_center(t), n) <= D]
-    Wt = [t for t in T if t[2] == 'W' and depth(tile_center(t), n) <= D]
+    Bt = [t for t in T if t[2] == 'B' and depth(tile_center(t), n, ox) <= D]
+    Wt = [t for t in T if t[2] == 'W' and depth(tile_center(t), n, ox) <= D]
     bcells = sorted({bi[c] for t in Bt for c in t[:2]}); bpos = {b: k for k, b in enumerate(bcells)}
     b1 = np.array([bpos[bi[t[0]]] for t in Bt]); b2 = np.array([bpos[bi[t[1]]] for t in Bt])
     w1 = np.array([wi[t[0]] for t in Wt]); w2 = np.array([wi[t[1]] for t in Wt])

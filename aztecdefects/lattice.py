@@ -46,16 +46,17 @@ def diagonal_tiles(cells):
     return T
 
 
-def boundary_edges(n):
-    """The four boundary staircases of A_n, each indexed clockwise from its corner.
+def boundary_edges(n, ox=0):
+    """The four boundary staircases of A_n (shifted by ox), each indexed clockwise from its corner.
 
     NE from the N corner, SE from the E corner, SW from the S corner, NW from the
-    W corner.  For odd n: NE, SW black; SE, NW white.
+    W corner.  Placement A, odd n / placement B (ox=1), even n: NE, SW black; SE, NW white.
     """
-    return {'NE': [(i, n - 1 - i) for i in range(n)],
-            'SE': [(n - 1 - j, -1 - j) for j in range(n)],
-            'SW': [(-1 - i, -n + i) for i in range(n)],
-            'NW': [(-n + i, i) for i in range(n)]}
+    E = {'NE': [(i, n - 1 - i) for i in range(n)],
+         'SE': [(n - 1 - j, -1 - j) for j in range(n)],
+         'SW': [(-1 - i, -n + i) for i in range(n)],
+         'NW': [(-n + i, i) for i in range(n)]}
+    return {k: [(x + ox, y) for x, y in v] for k, v in E.items()}
 
 
 def tile_center(t):
@@ -63,6 +64,6 @@ def tile_center(t):
     return ((a[0] + b[0]) / 2 + .5, (a[1] + b[1]) / 2 + .5)
 
 
-def depth(center, n):
+def depth(center, n, ox=0):
     """Distance (in layers) of a tile centre from the boundary; 0 = outermost layer."""
-    return n - (abs(center[0]) + abs(center[1]))
+    return n - (abs(center[0] - ox) + abs(center[1]))
