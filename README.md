@@ -12,7 +12,7 @@ Everything in the paper — exact counts, local statistics, bulk properties, the
 
 ```bash
 pip install -r requirements.txt        # numpy, scipy, sympy, python-flint, matplotlib, networkx, pytest
-python -m pytest -q tests              # 28 checks, ~15 s
+python -m pytest -q tests              # 27 checks, ~10 s
 ```
 
 Python ≥ 3.9. `python-flint` supplies fast exact modular and integer determinants.
