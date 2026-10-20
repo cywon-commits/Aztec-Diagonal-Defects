@@ -57,17 +57,17 @@ def base(ax):
         ax.add_patch(plt.Rectangle((i, j), 1, 1, fc='#eeeeee' if (i + j) % 2 == 0 else 'white', ec='#cccccc', lw=.4))
     ax.set_aspect('equal'); ax.axis('off'); ax.set_xlim(-n - .5, n + .5); ax.set_ylim(-n - .5, n + .5)
 fig, axs = plt.subplots(2, 2, figsize=(12, 12)); nm = mc.Normalize(0, max(pB.max(), pW.max()))
-for ax, S_, p, lab in [(axs[0, 0], Bt, pB, 'B tile'), (axs[0, 1], Wt, pW, 'W tile')]:
+for ax, S_, p, lab in [(axs[0, 0], Bt, pB, '(a) B tile'), (axs[0, 1], Wt, pW, '(b) W tile')]:
     base(ax)
     for e, pp in zip(S_, p):
         a_, b_, _ = tiles[e]; ax.plot([a_[0] + .5, b_[0] + .5], [a_[1] + .5, b_[1] + .5], color=seq(nm(pp)), lw=7, solid_capstyle='round')
         if pp > 0.02:
             ax.text((a_[0] + b_[0]) / 2 + .5, (a_[1] + b_[1]) / 2 + 1.05, f'{pp:.3f}', ha='center', fontsize=8)
-    ax.set_title(f'{lab} position probability (n=9, k=1)')
+    ax.set_title(f'{lab} occupation, $n=9$, $k=1$')
 cax = fig.add_axes([0.93, 0.56, 0.012, 0.36]); fig.colorbar(plt.cm.ScalarMappable(norm=nm, cmap=seq), cax=cax, label='probability')
 ax = axs[1, 0]; ks = sorted(dist[(1, 'BW')]); x = np.arange(len(ks))
-ax.bar(x - .2, [dist[(1, 'BW')][k][0] for k in ks], .38, color=BL, label='actual'); ax.bar(x + .2, [dist[(1, 'BW')][k][1] for k in ks], .38, color=OR, label='independent')
-ax.set_xticks(x); ax.set_xticklabels([f'{math.sqrt(k):.2f}' for k in ks], rotation=60, fontsize=8); ax.set_xlabel('B–W distance'); ax.legend(frameon=False); clean(ax)
+ax.bar(x - .2, [dist[(1, 'BW')][k][0] for k in ks], .38, color=BL, label='actual'); ax.bar(x + .2, [dist[(1, 'BW')][k][1] for k in ks], .38, color=OR, label='product of marginals')
+ax.set_xticks(x); ax.set_xticklabels([f'{math.sqrt(k):.2f}' for k in ks], rotation=60, fontsize=8); ax.set_xlabel('B–W center distance $d$'); ax.set_ylabel('probability'); ax.set_title('(c) B–W distance'); ax.legend(frameon=False); clean(ax)
 ax = axs[1, 1]; a_, b_ = np.unravel_index(P1.argmax(), P1.shape); be, we = tiles[Bt[a_]], tiles[Wt[b_]]
 rest = R - {be[0], be[1], we[0], we[1]}; G = nx.Graph()
 for (i, j) in rest:
@@ -82,22 +82,22 @@ for u_, v_ in Mt.items():
     ax.add_patch(plt.Rectangle((x0 + .1, y0 + .1), abs(u_[0] - v_[0]) + .8, abs(u_[1] - v_[1]) + .8, fc='none', ec='#555', lw=1))
 for t_, col in [(be, BCOL), (we, WCOL)]:
     ax.plot([t_[0][0] + .5, t_[1][0] + .5], [t_[0][1] + .5, t_[1][1] + .5], color=col, lw=8, solid_capstyle='round')
-ax.set_title(f'most probable pair (P={P1.max():.3f}), one covering')
+ax.set_title(f'(d) most probable pair ($P={P1.max():.3f}$)')
 fig.subplots_adjust(left=.05, right=.91, top=.96, bottom=.06, wspace=.08, hspace=.12); save(fig, 'fig3_n9k1')
 
 # ---------------- Fig. 4 : all k
 fig, ax = plt.subplots(2, 2, figsize=(13, 10)); K = [r['k'] for r in summary]
-ax[0, 0].semilogy(range(kmax + 1), [c[k] for k in range(kmax + 1)], 'o-', color=BL); ax[0, 0].set_xlabel('k'); ax[0, 0].set_title('(a) $c_k$')
-ax[0, 1].plot(K, [r['mean_depth_B'] for r in summary], 'o-', color=BL); ax[0, 1].axhline(dep[typ == 'B'].mean(), ls='--', color='#888'); ax[0, 1].set_title('(b) mean depth of B tiles')
+ax[0, 0].semilogy(range(kmax + 1), [c[k] for k in range(kmax + 1)], 'o-', color=BL); ax[0, 0].set_xlabel('$k$'); ax[0, 0].set_ylabel('$c_k$'); ax[0, 0].set_title('(a) exact counts')
+ax[0, 1].plot(K, [r['mean_depth_B'] for r in summary], 'o-', color=BL); ax[0, 1].axhline(dep[typ == 'B'].mean(), ls='--', color='#888'); ax[0, 1].set_xlabel('$k$'); ax[0, 1].set_ylabel('mean depth'); ax[0, 1].set_title('(b) mean depth of B tiles')
 ax[1, 0].plot(K, [r['d_BW'] for r in summary], 'o-', color=BL, label='B–W'); ax[1, 0].plot(K, [r['d_BW_ind'] for r in summary], '--', color=BL)
 K2 = [r['k'] for r in summary if 'd_BB' in r]
 ax[1, 0].plot(K2, [r['d_BB'] for r in summary if 'd_BB' in r], 'o-', color=OR, label='B–B'); ax[1, 0].plot(K2, [r['d_BB_ind'] for r in summary if 'd_BB' in r], '--', color=OR)
-ax[1, 0].legend(frameon=False); ax[1, 0].set_title('(c) mean pair distance (dashed: independent)')
+ax[1, 0].legend(frameon=False); ax[1, 0].set_xlabel('$k$'); ax[1, 0].set_ylabel('mean distance'); ax[1, 0].set_title('(c) mean pair distance (dashed: independent)')
 for k_, cc in zip([2, 5, 10, 20], [BL, OR, AQ, VI]):
     for kd, ls_ in [('BW', '-'), ('BB', ':')]:
         rows = sorted(dist[(k_, kd)].items()); rows = [(math.sqrt(a), v[0] / v[1]) for a, v in rows if v[1] > 1e-4]
-        ax[1, 1].plot([r[0] for r in rows], [r[1] for r in rows], ls_, marker='o', ms=3, color=cc, label=f'k={k_} {kd}')
-ax[1, 1].set_yscale('log'); ax[1, 1].axhline(1, color='#888'); ax[1, 1].legend(frameon=False, ncol=2, fontsize=7); ax[1, 1].set_title('(d) g(d)')
+        ax[1, 1].plot([r[0] for r in rows], [r[1] for r in rows], ls_, marker='o', ms=3, color=cc, label=f'$k={k_}$ {kd[0]}–{kd[1]}')
+ax[1, 1].set_yscale('log'); ax[1, 1].axhline(1, color='#888'); ax[1, 1].legend(frameon=False, ncol=2, fontsize=7); ax[1, 1].set_xlabel('distance $d$'); ax[1, 1].set_ylabel('$g(d)$'); ax[1, 1].set_title('(d) pair correlation')
 for a_ in ax.ravel():
     clean(a_)
 fig.tight_layout(); save(fig, 'fig4_allk')
