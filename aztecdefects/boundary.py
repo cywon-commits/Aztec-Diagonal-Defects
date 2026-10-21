@@ -176,3 +176,32 @@ def k2_split_statistics(n, chunk=3_000_000, ox=0):
     cBB = (pb * (xB1 - mB1) * (xB2 - mB2)).sum() / math.sqrt(vB1 * vB2)
     cBW = (P * (xB1 - mB1)[:, None] * (xW1 - mW1)[None, :]).sum() / math.sqrt(vB1 * vW1)
     return dict(ln_c2_over_c0=m + math.log(Z), var_over_n=vB1 / n, n_corr_BB=n * cBB, n_corr_BW=n * cBW)
+
+
+def k2_all_sectors(n, ox=0, chunk=1_000_000):
+    """k = 2 on the outermost layer, summed over all edge assignments (Theorem 2, float 4x4 determinants).
+
+    Returns (ln of the total outer-layer c_2/c_0, probability that both B tiles lie on the same edge).
+    Log-sum-exp accumulation, so memory stays O(chunk).
+    """
+    import itertools
+    N = N_table(n); lf = lambda k: lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1)
+    T = boundary_tiles(n, ox); Bs = [t for t in T if t[0] in ('NE', 'SW')]; Ws = [t for t in T if t[0] in ('SE', 'NW')]
+    blacks = sorted({(e, s + d) for (e, s) in Bs for d in (0, 1)}); whites = sorted({(e, s + d) for (e, s) in Ws for d in (0, 1)})
+    bi = {c: k for k, c in enumerate(blacks)}; wi = {c: k for k, c in enumerate(whites)}
+    H = np.array([[tau(eb, ew) * math.exp(math.log(nu(n, eb, ib, ew, iw, N)) - lf(ib) - lf(n - 1 - iw))
+                   for (eb, ib) in blacks] for (ew, iw) in whites])
+    BP = list(itertools.combinations(Bs, 2)); WP = list(itertools.combinations(Ws, 2))
+    cols = np.array([[bi[(x[0], x[1] + d)] for x in p for d in (0, 1)] for p in BP])
+    rows = np.array([[wi[(x[0], x[1] + d)] for x in p for d in (0, 1)] for p in WP])
+    lb = np.array([sum(lf(x[1] + d) for x in p for d in (0, 1)) for p in BP])
+    lw = np.array([sum(lf(n - 1 - x[1] - d) for x in p for d in (0, 1)) for p in WP])
+    same = np.array([p[0][0] == p[1][0] for p in BP])
+    lZt = -np.inf; lZs = -np.inf; step = max(1, chunk // len(WP))
+    for s in range(0, len(BP), step):
+        e = min(len(BP), s + step); sub = H[rows[None, :, :, None], cols[s:e, None, None, :]]
+        lw_ = np.log(np.abs(np.linalg.det(sub)) + 1e-300) + lb[s:e, None] + lw[None, :]
+        lZt = np.logaddexp(lZt, np.logaddexp.reduce(lw_.ravel()))
+        if same[s:e].any():
+            lZs = np.logaddexp(lZs, np.logaddexp.reduce(lw_[same[s:e]].ravel()))
+    return float(lZt) - 4 * n * math.log(2), math.exp(lZs - lZt)

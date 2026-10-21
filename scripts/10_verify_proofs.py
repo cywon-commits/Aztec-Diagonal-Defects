@@ -1,4 +1,4 @@
-"""Independent checks of every ingredient of Theorems 1 and 2 (Secs. VIII-X).
+"""Independent checks of every ingredient of Theorems 1 and 2 (Secs. IX-XI).
 
     python scripts/10_verify_proofs.py [--nmax 10]    (~2 minutes)
 """

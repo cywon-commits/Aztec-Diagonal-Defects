@@ -44,3 +44,8 @@ if __name__=='__main__':
                 if good: tilings.add(frozenset(T))
         sv=cp_model.CpSolver(); sv.parameters.enumerate_all_solutions=True; sv.Solve(m,C())
         print(f'AD_{n} ox={ox} k={kk}: states mapped to perfect coverings {res}, distinct coverings {len(tilings)}')
+        from aztecdefects.bruteforce import enumerate_coverings
+        from aztecdefects.lattice import partner as _partner
+        exact = {frozenset(frozenset(t) for t in cov) for cov in enumerate_coverings(s.cells)
+                 if sum(1 for t in cov if _partner(*t[0]) == t[1]) == 2 * kk}
+        print(f'   set of coverings equals the exact enumeration ({len(exact)} coverings): {tilings == exact}')

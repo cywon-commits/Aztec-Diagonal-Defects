@@ -1,5 +1,5 @@
 """Placement B (diamond shifted by one lattice step): the full analysis at the same level
-as placement A, and the comparison of the two (Sec. XI, Fig. 15).
+as placement A, and the comparison of the two (Sec. XIII, Fig. 17; file fig15).
 
     python scripts/11_placement_B.py [--recompute]      (~5 min with cached data)
 
@@ -47,6 +47,10 @@ for ox, off, lab in [(1, 0, 'B'), (0, 1, 'A')]:
 k2 = {n: k2_split_statistics(n, ox=1) for n in (40, 80, 120, 160, 200)}
 for n, r in k2.items():
     print(f"B k=2 n={n}: n^6 c2/(c0 16^n) = {math.exp(r['ln_c2_over_c0']-4*n*math.log(2)+6*math.log(n)):.5f}, n corr(BB) = {r['n_corr_BB']:.3f}")
+xs = np.array([1 / n for n in k2]); A4 = np.vstack([xs ** p for p in range(4)]).T
+C2B = np.array([math.exp(r['ln_c2_over_c0'] - 4 * n * math.log(2) + 6 * math.log(n)) for n, r in k2.items()])
+kapB = np.array([math.exp(r['ln_c2_over_c0'] - 2 * k1_outer(n, 1)['ln_c1_over_c0']) for n, r in k2.items()])
+print(f'B k=2: extrapolated n^6 c2/(c0 16^n) = {np.linalg.lstsq(A4, C2B, rcond=None)[0][0]:.4f}, c2 c0/c1^2 = {np.linalg.lstsq(A4, kapB, rcond=None)[0][0]:.4f}')
 
 # ---- exact k=1 (all layers), u = 1, thresholds
 ex1 = {}

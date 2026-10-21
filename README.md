@@ -33,24 +33,39 @@ Python ≥ 3.9. `python-flint` supplies fast exact modular and integer determina
 
 ## Reproducing the paper
 
-Run from the repository root (outputs go to `data/` and `figures/`):
+Run from the repository root (outputs go to `data/` and `figures/`); `bash make_all.sh` runs everything below in order.
 
 | paper | script | runtime* |
 |---|---|---|
-| Table I, Eq. (6), Sec. III | `python scripts/01_polynomials.py --nmax 13` (`--nmax 17` for Figs. 13–14) | 5 min (17: ~35 min) |
-| Sec. IV, Figs. 3–5 | `python scripts/02_n9_statistics.py` | 2 min |
-| Sec. V, Fig. 6 (and bulk data for Figs. 11, 13) | `python scripts/03_bulk.py` | 5 min |
-| Sec. VI, Fig. 11 | `python scripts/04_equal_energy.py --nmax 61` | 3 min |
-| Sec. XI, Fig. 9 | `python scripts/05_k1_large_n.py --n 21 41 61 81 101 121` | 20 min |
-| Sec. XI, Fig. 10 | `python scripts/06_boundary_asymptotics.py --nmax 1601` | 1 min |
-| Sec. XII, Fig. 12 | `python scripts/07_k2.py` | 2 min |
-| Sec. VII, Figs. 13–14 | `python scripts/08_thermodynamics.py` | 5 min |
-| Figs. 1, 2, 7, 8 | `python scripts/09_schematics.py` | seconds |
-| Secs. IX–XI (proof ingredients) | `python scripts/10_verify_proofs.py --nmax 10` | 2 min |
-| Sec. XIII (placement B), Fig. 15 | `python scripts/11_placement_B.py` | 5 min (with cache) |
-| Sec. VIII (Shakti vertex model), Table II, Figs. 16–17 | scripts in `shakti/code/` (needs `ortools`; see `shakti/README.md`) | minutes to 1 h |
+| Table I, Eq. (6), Secs. III, VI, VII | `python scripts/01_polynomials.py --nmax 17` | 1 min with cache (n = 14, 16 from scratch: ~15 min) |
+| Sec. IV, Figs. 3–5 | `python scripts/02_n9_statistics.py` | seconds with cache |
+| Sec. V, Fig. 6 | `python scripts/03_bulk.py` | 1 min |
+| Sec. VI, Fig. 7 | `python scripts/04_equal_energy.py --nmax 81` | 4 min |
+| Sec. VII, Figs. 8–9 | `python scripts/08_thermodynamics.py` | 2 min |
+| Sec. VIII, Table II, Figs. 10–11 | `bash shakti/run_all.sh` (needs `ortools`; see `shakti/README.md`) | 1–2 h |
+| Secs. IX–XI (proof ingredients), Figs. 12–13 | `python scripts/10_verify_proofs.py --nmax 10`, `python scripts/09_schematics.py` | 1 min |
+| Sec. XI, Fig. 14 | `python scripts/05_k1_large_n.py --n 21 41 61 81 101 121` | 20 min without cache |
+| Sec. XI, Fig. 15 | `python scripts/06_boundary_asymptotics.py --nmax 1601` | 30 s |
+| Sec. XII, Fig. 16 | `python scripts/07_k2.py` | 2 min |
+| Sec. XIII, Fig. 17 | `python scripts/13_placement_local.py`, then `python scripts/11_placement_B.py` | 2 + 3 min |
+| numbers quoted in the text (truncation, coupling ratio, Theorem 1 vs. multimodular data, sign rule, placement-B checks) | `python scripts/12_audit_checks.py` | 30 s |
+| Figs. 1–2 | `python scripts/09_schematics.py` | seconds |
 
-\*single core. `bash make_all.sh` runs everything with the default settings. The cached results in `data/` (polynomials up to n = 17 for placement A and n = 16 for placement B, bulk data, exact k = 1 weights up to n = 81 for both placements) let the figure scripts run without recomputation; `data/n9_local.npz` is regenerated on the first run of script 02.
+\*single core (the CP-SAT runs use 2 workers). The cached results in `data/` (polynomials up to n = 17 for placement A and n = 16 for placement B, bulk data, exact k = 1 weights up to n = 121 for placement A and n = 80 for placement B, local statistics) let the figure scripts run without recomputation.
+
+### Figure files
+
+| paper | file | paper | file |
+|---|---|---|---|
+| Fig. 1 | `fig1_model` | Fig. 10 | `fig17_shakti_aztec` |
+| Fig. 2 | `fig2_n3` | Fig. 11 | `fig16_micro` |
+| Fig. 3 | `fig3_n9k1` | Fig. 12 | `fig7_renewal` |
+| Fig. 4 | `fig4_allk` | Fig. 13 | `fig8_proof` |
+| Fig. 5 | `fig5_occupancy` | Fig. 14 | `fig9_largen` |
+| Fig. 6 | `fig6_bulk` | Fig. 15 | `fig10_asymptotics` |
+| Fig. 7 | `fig11_equal_energy` | Fig. 16 | `fig12_k2` |
+| Fig. 8 | `fig13_thermo` | Fig. 17 | `fig15_placementB` |
+| Fig. 9 | `fig14_staircase` | | |
 
 ## Key results reproduced
 

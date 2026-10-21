@@ -1,4 +1,4 @@
-"""Exact single-pair (k=1) weights up to large n by multimodular banded elimination (Sec. IX, Fig. 9).
+"""Exact single-pair (k=1) weights up to large n by multimodular banded elimination (Sec. XI, Fig. 14; file fig9).
 
     python scripts/05_k1_large_n.py --n 21 41 61 81 [101 121]
     (n = 81: ~2 min, 101: ~5 min, 121: ~12 min)
@@ -26,12 +26,13 @@ a_.plot([0, nmax, 0, -nmax, 0], [nmax, 0, -nmax, 0, nmax], color='#999', lw=.8);
 a_.plot(nmax / math.sqrt(2) * np.cos(th), nmax / math.sqrt(2) * np.sin(th), ':', color='#999', lw=.8)
 for c_, p_, col in [(d['cB'], P.sum(1), BL), (d['cW'], P.sum(0), OR)]:
     k = p_ > 1e-4; a_.scatter(c_[k, 0], c_[k, 1], c=col, s=4 + 400 * p_[k])
-a_.set_aspect('equal'); a_.axis('off'); a_.set_title(f'(a) marginals, $n={nmax}$')
-for n, col in zip(done[-4:], [BL, OR, AQ, VI]):
+a_.text(-.62 * nmax, .62 * nmax, 'W', color=OR, ha='center', fontsize=10); a_.text(.62 * nmax, .62 * nmax, 'B', color=BL, ha='center', fontsize=10)
+a_.set_aspect('equal'); a_.axis('off'); a_.set_title(f'(a) marginals, $n={nmax}$, $k=1$')
+for n, col in zip([m for m in done if m >= 41][-5:], [BL, OR, AQ, VI, '#111111']):
     dd = np.load(os.path.join(DATA, f'k1_exact_n{n}.npz')); L_ = dd['L']; cB = dd['cB']; P_ = np.exp(L_ - L_.max()); P_ /= P_.sum(); pB = P_.sum(1)
     dB = n - (np.abs(cB[:, 0]) + np.abs(cB[:, 1])); ne = (dB == 0) & (cB[:, 0] > 0) & (cB[:, 1] > 0)
     z = (cB[:, 0][ne] - n / 2) / math.sqrt(n); w = pB[ne] / pB[ne].sum(); o = np.argsort(z)
     ax[1].plot(z[o], w[o] / (2 / math.sqrt(n)), color=col, lw=1.5, label=f'$n={n}$')
 zz = np.linspace(-1.6, 1.6, 200); s = 1 / (2 * math.sqrt(2)); ax[1].plot(zz, np.exp(-zz ** 2 / (2 * s * s)) / (s * math.sqrt(2 * math.pi)), 'k--', lw=1.2, label=r'Gaussian $\sigma^2=1/8$')
-ax[1].set_xlim(-1.6, 1.6); ax[1].set_xlabel(r'$(x-n/2)/\sqrt{n}$'); ax[1].legend(frameon=False, fontsize=8); clean(ax[1]); ax[1].set_title('(b) B position along its edge')
+ax[1].set_xlim(-1.6, 1.6); ax[1].set_xlabel(r'$(x-n/2)/\sqrt{n}$ along the NE edge'); ax[1].set_ylabel('density'); ax[1].legend(frameon=False, fontsize=8); clean(ax[1]); ax[1].set_title('(b) B position along its edge')
 fig.tight_layout(); save(fig, 'fig9_largen')

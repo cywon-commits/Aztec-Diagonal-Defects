@@ -43,6 +43,10 @@ for k in range(1, kmax + 1):
 r1 = summary[0]; r2 = summary[1]
 print(f"k=1: outer-layer prob {rho[1][(typ=='B')&(dep==0)].sum():.3f}, <d_BW> {r1['d_BW']:.2f} vs indep {r1['d_BW_ind']:.2f}")
 print(f"k=2: <d_BB> {r2['d_BB']:.2f} vs indep {r2['d_BB_ind']:.2f}")
+g = lambda k, kd, d2: dist[(k, kd)][d2][0] / dist[(k, kd)][d2][1]
+print(f"k=1: g_BW(sqrt2) = {g(1, 'BW', 2):.2f};  k=2: g_BB(2) = {g(2, 'BB', 4):.3f}")
+print(f"k=1: mean depth of B {r1['mean_depth_B']:.2f} (uniform {dep[typ == 'B'].mean():.2f});  "
+      f"depth crosses the uniform value at k = {next(r['k'] for r in summary if r['mean_depth_B'] > dep[typ == 'B'].mean())}")
 
 # ---------------- Fig. 3 : k = 1
 R = aztec(n); Bt = [k for k in range(T) if typ[k] == 'B']; Wt = [k for k in range(T) if typ[k] == 'W']
@@ -51,6 +55,7 @@ for m, (i, j) in enumerate(zip(I, J)):
     if kind[m] == 'BW':
         b, w = (i, j) if typ[i] == 'B' else (j, i); P1[bpos[b], wpos[w]] = float(cef[1, m])
 P1 /= P1.sum(); pB = P1.sum(1); pW = P1.sum(0)
+print(f'k=1: maximal B occupation {pB.max():.3f}, most probable pair {P1.max():.3f}')
 seq = mc.LinearSegmentedColormap.from_list('b', ['#cde2fb', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b'])
 def base(ax):
     for (i, j) in R:
@@ -111,4 +116,6 @@ for a_, k in zip(axs.ravel(), ks):
     for e in Bt:
         p_, q_, _ = tiles[e]; a_.plot([p_[0] + .5, q_[0] + .5], [p_[1] + .5, q_[1] + .5], color=cm(nm(rho[k, e])), lw=2.6, solid_capstyle='round')
     a_.set_aspect('equal'); a_.axis('off'); a_.set_xlim(-n - .3, n + .3); a_.set_ylim(-n - .3, n + .3); a_.set_title(f'$k={k}$')
-fig.subplots_adjust(left=.01, right=.99, top=.93, bottom=.05, wspace=.03, hspace=.15); save(fig, 'fig5_occupancy')
+fig.subplots_adjust(left=.01, right=.99, top=.93, bottom=.12, wspace=.03, hspace=.15)
+cax = fig.add_axes([0.3, 0.05, 0.4, 0.025]); fig.colorbar(plt.cm.ScalarMappable(norm=nm, cmap=cm), cax=cax, orientation='horizontal', label='occupation probability')
+save(fig, 'fig5_occupancy')
