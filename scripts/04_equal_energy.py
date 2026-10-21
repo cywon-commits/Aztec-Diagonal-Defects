@@ -1,4 +1,4 @@
-"""Equal creation energies, u = 1 (Sec. VI, Fig. 11).
+"""Equal creation energies, u = 1 (Sec. VI, Fig. 7; file fig11).
 
     python scripts/04_equal_energy.py [--nmax 61]     (~3 minutes for nmax 61)
 """

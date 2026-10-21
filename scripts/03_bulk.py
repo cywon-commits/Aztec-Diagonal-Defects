@@ -15,6 +15,7 @@ print('min|P| / t^4 :', (gap / ts ** 4).round(6))
 
 mats = bulk.momentum_matrices(500)
 print('phi(0) =', bulk.thermo(0.0, mats=mats)[0], ' G/pi =', 0.915965594177219 / math.pi)
+print('phi(1) =', bulk.thermo(1.0, mats=mats)[0])
 f1 = bulk.diagonal_fraction(1.0, mats=mats); print('bulk diagonal fraction at u=1:', f1)
 us = np.logspace(-3, 2, 16); fu = np.array([bulk.diagonal_fraction(u, mats=mats) for u in us])
 taus = np.logspace(np.log10(0.25), 1, 40); th = np.array([bulk.thermo(math.exp(-2 / t), mats=mats) for t in taus])

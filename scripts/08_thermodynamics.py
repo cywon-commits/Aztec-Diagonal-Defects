@@ -1,4 +1,4 @@
-"""Thermodynamics and free-energy minimisation (Sec. VII, Figs. 13-14).
+"""Thermodynamics and free-energy minimisation (Sec. VII, Figs. 8-9; files fig13, fig14).
 
     python scripts/08_thermodynamics.py [--float-n 21 41]    (needs 01 and 03; ~5 minutes)
 Temperatures in units of eps_d/k_B (energy of one diagonal tile above a domino).
@@ -19,7 +19,7 @@ for n in odd:
     d, T, conc = thermo.thresholds(polys[n]); print(n, ' '.join(f'{t:6.3f}' for t in T[:4]), conc)
 Tstar = {n: brentq(lambda t: thermo.k_mean(polys[n], t) - 1, 0.01, 5) for n in odd if n >= 7}
 print('T* (<k>=1):', {n: round(t, 4) for n, t in Tstar.items()})
-flt = {}
+flt = {}; Tfloat = {}
 for n in a.float_n:
     rows = []
     for t in np.logspace(-1.2, 1, 24):
@@ -28,6 +28,13 @@ for n in a.float_n:
         if abs(k1 - k2) < 1e-6 * max(1, k1):
             rows.append((t, k1))
     flt[n] = np.array(rows); print(f'float n={n}: {len(rows)} reliable temperatures', flush=True)
+    r_ = flt[n]; i_ = int(np.searchsorted(r_[:, 1], 1.0))
+    if 0 < i_ < len(r_) and r_[i_ - 1, 1] < 1 < r_[i_, 1]:      # reliable bracket on both sides
+        km = lambda t, g=None: tile_probabilities(aztec(n), math.exp(-2 / t), gauge_seed=g)[1].sum() / 2
+        ts = brentq(lambda t: km(t) - 1, r_[i_ - 1, 0], r_[i_, 0], xtol=1e-5)
+        print(f'float n={n}: <k>=1 at T* = {ts:.4f} eps_d  (gauges: {km(ts):.6f}, {km(ts, 3):.6f})', flush=True); Tfloat[n] = ts
+    else:
+        print(f'float n={n}: <k>=1 lies outside the reliable double-precision range', flush=True)
 
 # Fig. 13
 c9 = polys[9]; S9 = thermo.entropy(c9); k9 = np.arange(len(S9))
@@ -40,13 +47,21 @@ for n, cc in [(9, BL), (11, '#88aee8')]:
     a_.loglog(taus, [thermo.k_mean(polys[n], t) for t in taus], color=cc, label=f'$n={n}$ exact')
 for (n, r), cc in zip(flt.items(), [OR, AQ]):
     a_.loglog(r[:, 0], r[:, 1], 'o-', color=cc, ms=3, label=f'$n={n}$')
+    pth = os.path.join(DATA, f'k1_exact_n{n}.npz')
+    if os.path.exists(pth):                    # dilute limit u c1/c0 from the exact k = 1 weights
+        L_ = np.load(pth)['L']; lnc1 = L_.max() + math.log(np.exp(L_ - L_.max()).sum())
+        t2 = taus[np.exp(-2 / taus + lnc1) < 0.4]; a_.loglog(t2, np.exp(-2 / t2 + lnc1), ':', color=cc, lw=1.4)
+    a_.loglog(b['tau'], b['rho'] * 2 * n * (n + 1), '--', color=cc, lw=1, alpha=.7)   # bulk density times the number of cells
 a_.set_ylim(1e-3, 300); a_.set_xlabel('$k_BT/\\varepsilon_d$'); a_.set_ylabel(r'$\langle k\rangle$'); a_.legend(frameon=False, fontsize=7.5); a_.set_title('(b) mean pair number')
 a_ = ax[1, 0]; a_.semilogx(b['tau'], b['c'], color=BL); a2 = a_.twinx(); a2.semilogx(b['tau'], b['s'], color=OR); a2.axhline(0.2915609, color=OR, ls=':')
 a_.set_xlabel('$k_BT/\\varepsilon_d$'); a_.set_ylabel('$c/k_B$ per cell', color=BL); a2.set_ylabel('$s/k_B$ per cell', color=OR); a_.set_title('(c) bulk')
 a_ = ax[1, 1]; nn = np.arange(5, 202, 2)
 a_.loglog(nn, [thermo.onset_temperature_asymptotic(n) for n in nn], color=BL, label='$2\\varepsilon_d/\\ln(c_1/c_0)$')
 a_.loglog(nn, 1 / (nn * math.log(2)), '--', color='#888', label='$\\varepsilon_d/(n\\ln2)$')
-a_.loglog(list(Tstar), list(Tstar.values()), 'o', color=OR, label=r'exact $\langle k\rangle=1$'); a_.legend(frameon=False, fontsize=8); a_.set_title('(d) onset temperature')
+a_.loglog(list(Tstar), list(Tstar.values()), 'o', color=OR, label=r'exact $\langle k\rangle=1$')
+if Tfloat:
+    a_.loglog(list(Tfloat), list(Tfloat.values()), 's', color=AQ, label=r'Pfaffian $\langle k\rangle=1$')
+a_.legend(frameon=False, fontsize=8); a_.set_title('(d) onset temperature')
 for x in [ax[0, 0], ax[0, 1], ax[1, 1]]:
     clean(x)
 fig.tight_layout(); save(fig, 'fig13_thermo')
@@ -64,6 +79,8 @@ for n in [n for n in (9, 13, 17) if n in polys]:
 ax[1].set_ylim(0, 10.5); ax[1].set_xlabel('$k_BT/\\varepsilon_d$'); ax[1].legend(frameon=False, fontsize=7); ax[1].set_title('(b) $k^*(T)$ and $\\langle k\\rangle$')
 for k, m, cc in [(1, 'o', '#2a78d6'), (2, 's', '#86b6ef'), (3, '^', '#eb6834'), (4, 'v', '#f4a582')]:
     ax[2].plot([n for n in odd if n >= 7], [n * math.log(2) * thermo.thresholds(polys[n])[1][k - 1] for n in odd if n >= 7], m + '-', color=cc, ms=4, label=f'$k={k}$')
+nn2 = np.linspace(7, 200, 200); ax[2].plot(nn2, [n * math.log(2) * thermo.onset_temperature_asymptotic(n) for n in nn2], 'k--', lw=.9, label=r'$T_1$ asymptotics')
+ax[2].axhline(1, color='#999', lw=.6, ls=':'); ax[2].set_xlim(6, 200)
 ax[2].set_xscale('log'); ax[2].set_ylim(0.8, 7); ax[2].set_xlabel('$n$'); ax[2].set_ylabel(r'$T_k n\ln2/\varepsilon_d$'); ax[2].legend(frameon=False, fontsize=6.5); ax[2].set_title('(c) thresholds')
 for x in ax:
     clean(x)

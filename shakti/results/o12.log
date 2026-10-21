@@ -1,0 +1,5 @@
+E0 -554 OPTIMAL
+edge_along: dE=4.00 J1  flips=2 (OPTIMAL)  barrier=4.00 J1  annih=0.00 J1
+edge_costly_in: dE=4.00 J1  flips=2 (OPTIMAL)  barrier=4.00 J1  annih=0.00 J1
+edge_cheap_in: dE=3.20 J1  flips=6 (OPTIMAL)  barrier=5.60 J1  annih=2.40 J1
+inner: dE=3.20 J1  flips=6 (OPTIMAL)  barrier=5.60 J1  annih=2.40 J1

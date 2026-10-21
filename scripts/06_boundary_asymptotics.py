@@ -1,4 +1,4 @@
-"""Large-n asymptotics of one pair from the exact boundary formula (Sec. IX, Fig. 10).
+"""Large-n asymptotics of one pair from the exact boundary formula (Sec. XI, Fig. 15; file fig10).
 
     python scripts/06_boundary_asymptotics.py [--nmax 1601]     (~1 minute)
 """
@@ -26,7 +26,7 @@ for f in os.listdir(DATA):
 fig, ax = plt.subplots(1, 3, figsize=(7.2, 2.5)); nn = np.array(ns)
 ax[0].plot(1 / nn, [math.exp(R[n]['ln_c1_over_c0'] + 3 * math.log(n) - 2 * n * math.log(2)) for n in ns], 'o-', color=BL, ms=4, label='outer-layer formula')
 if ex:
-    ke = sorted(ex); ax[0].plot([1 / n for n in ke], [math.exp(ex[n] + 3 * math.log(n) - 2 * n * math.log(2)) for n in ke], 's', color=OR, label='full exact')
+    ke = sorted(ex); ax[0].plot([1 / n for n in ke], [math.exp(ex[n] + 3 * math.log(n) - 2 * n * math.log(2)) for n in ke], 's', color=OR, label='multimodular (6 layers)')
 ax[0].axhline(2 / math.pi, color='#555', ls='--'); ax[0].set_title(r'(a) $\to 2/\pi$'); ax[0].legend(frameon=False, fontsize=7)
 ax[1].plot(1 / nn, [R[n]['var_over_n'] for n in ns], 'o-', color=BL, ms=4); ax[1].axhline(1 / 8, color='#555', ls='--'); ax[1].set_title(r'(b) Var$/n\to1/8$')
 ax[2].plot(1 / nn, [n * R[n]['corr'] for n in ns], 'o-', color=BL, ms=4); ax[2].axhline(4, color='#555', ls='--'); ax[2].set_title(r'(c) $n\,$corr$\to4$')

@@ -50,9 +50,12 @@ def tau(Eb, Ew):
     return -1 if (Eb == 'SW' and Ew == 'NW') else 1
 
 
-def boundary_tiles(n):
-    """Diagonal tiles lying on the outermost layer: list of (edge, s) with cells edge[s], edge[s+1]."""
-    E = boundary_edges(n); out = []
+def boundary_tiles(n, ox=0):
+    """Diagonal tiles lying on the outermost layer: list of (edge, s) with cells edge[s], edge[s+1].
+
+    Non-empty for placement A (ox=0) with odd n and placement B (ox=1) with even n.
+    """
+    E = boundary_edges(n, ox); out = []
     for name in EDGE_ORDER:
         L = E[name]
         for s in range(n - 1):
@@ -93,7 +96,51 @@ def k1_outer_total(n):
     return dict(ln_c1_over_c0=lnS, var_over_n=va / n, corr=cab / math.sqrt(va * vb))
 
 
-def k2_split_statistics(n, chunk=3_000_000):
+def _block_sweep(n, row_starts, col_starts):
+    """Sum over tile pairs of |N[r][m]N[r+1][m-1] - N[r][m-1]N[r+1][m]| with m = n-1-c,
+    for row tiles (r, r+1), r in row_starts, and column tiles (c, c+1), c in col_starts.
+    Returns S0 and first/second moments in (r, c).  Row-by-row big-integer recursion."""
+    C = [comb(n, k) for k in range(n + 1)]; prev = [0] * n; rows = {}
+    rs = set(row_starts); S0 = Sr = Sc = Srr = Scc = Src = 0
+    for a in range(n):
+        cur = [0] * n
+        for b in range(n):
+            cur[b] = C[a] * C[b] - prev[b] - (cur[b - 1] if b else 0) + (prev[b - 1] if b else 0)
+        if (a - 1) in rs:
+            r0 = rows.pop(a - 1); r = a - 1
+            for c in col_starts:
+                m = n - 1 - c
+                v = abs(r0[m] * cur[m - 1] - r0[m - 1] * cur[m])
+                S0 += v; Sr += v * r; Sc += v * c; Srr += v * r * r; Scc += v * c * c; Src += v * r * c
+        if a in rs:
+            rows[a] = cur
+        prev = cur
+    return S0, Sr, Sc, Srr, Scc, Src
+
+
+def k1_outer(n, ox=0):
+    """Exact outer-layer k=1 weight for any placement, summed over the four edge blocks.
+
+    Returns ln(c1/c0), fraction per block, and along-edge variance/n and correlation
+    of the dominant (NE,SE) block, with positions measured along each edge from its corner.
+    """
+    T = boundary_tiles(n, ox); st = {e: [s for (x, s) in T if x == e] for e in EDGE_ORDER}
+    blocks = {}
+    for Eb, Ew in [('NE', 'SE'), ('NE', 'NW'), ('SW', 'SE'), ('SW', 'NW')]:
+        k1, k2 = EDGE_ORDER.index(Eb), EDGE_ORDER.index(Ew)
+        # rows = edge that comes first clockwise
+        re_, ce_ = (Eb, Ew) if (k2 - k1) % 4 == 1 else (Ew, Eb)
+        blocks[(Eb, Ew)] = (re_, ce_, _block_sweep(n, st[re_], st[ce_]))
+    tot = sum(b[2][0] for b in blocks.values())
+    frac = {k: b[2][0] / tot for k, b in blocks.items()}
+    re_, ce_, (S0, Sr, Sc, Srr, Scc, Src) = blocks[('NE', 'SE')]
+    mr, mc = Sr / S0, Sc / S0; vr = Srr / S0 - mr * mr; vc = Scc / S0 - mc * mc; crc = (Src / S0 - mr * mc) / math.sqrt(vr * vc) if vr * vc > 0 else float('nan')
+    return dict(ln_c1_over_c0=math.log(tot) - 2 * n * math.log(2), block_fraction=frac,
+                var_over_n=vr / n, var_over_n_W=vc / n, corr=-crc,
+                n_tiles={e: len(v) for e, v in st.items()})
+
+
+def k2_split_statistics(n, chunk=3_000_000, ox=0):
     """k = 2 with B tiles on NE and SW and W tiles on SE and NW (the dominant sector).
 
     Returns ln(c_2/c_0) of that sector, Var/n of a B position, n*corr(B_NE, B_SW),
@@ -109,7 +156,7 @@ def k2_split_statistics(n, chunk=3_000_000):
     for r, (ew, j) in enumerate(whites):
         for c, (eb, i) in enumerate(blacks):
             H[r, c] = tau(eb, ew) * math.exp(math.log(nu(n, eb, i, ew, j, N)) - lf(i) - lf(n - 1 - j))
-    T = boundary_tiles(n)
+    T = boundary_tiles(n, ox)
     NE = [t for t in T if t[0] == 'NE']; SW = [t for t in T if t[0] == 'SW']
     SE = [t for t in T if t[0] == 'SE']; NW = [t for t in T if t[0] == 'NW']
     cols = np.array([[bi[(x[0], x[1])], bi[(x[0], x[1] + 1)], bi[(y[0], y[1])], bi[(y[0], y[1] + 1)]] for x in NE for y in SW])
@@ -129,3 +176,32 @@ def k2_split_statistics(n, chunk=3_000_000):
     cBB = (pb * (xB1 - mB1) * (xB2 - mB2)).sum() / math.sqrt(vB1 * vB2)
     cBW = (P * (xB1 - mB1)[:, None] * (xW1 - mW1)[None, :]).sum() / math.sqrt(vB1 * vW1)
     return dict(ln_c2_over_c0=m + math.log(Z), var_over_n=vB1 / n, n_corr_BB=n * cBB, n_corr_BW=n * cBW)
+
+
+def k2_all_sectors(n, ox=0, chunk=1_000_000):
+    """k = 2 on the outermost layer, summed over all edge assignments (Theorem 2, float 4x4 determinants).
+
+    Returns (ln of the total outer-layer c_2/c_0, probability that both B tiles lie on the same edge).
+    Log-sum-exp accumulation, so memory stays O(chunk).
+    """
+    import itertools
+    N = N_table(n); lf = lambda k: lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1)
+    T = boundary_tiles(n, ox); Bs = [t for t in T if t[0] in ('NE', 'SW')]; Ws = [t for t in T if t[0] in ('SE', 'NW')]
+    blacks = sorted({(e, s + d) for (e, s) in Bs for d in (0, 1)}); whites = sorted({(e, s + d) for (e, s) in Ws for d in (0, 1)})
+    bi = {c: k for k, c in enumerate(blacks)}; wi = {c: k for k, c in enumerate(whites)}
+    H = np.array([[tau(eb, ew) * math.exp(math.log(nu(n, eb, ib, ew, iw, N)) - lf(ib) - lf(n - 1 - iw))
+                   for (eb, ib) in blacks] for (ew, iw) in whites])
+    BP = list(itertools.combinations(Bs, 2)); WP = list(itertools.combinations(Ws, 2))
+    cols = np.array([[bi[(x[0], x[1] + d)] for x in p for d in (0, 1)] for p in BP])
+    rows = np.array([[wi[(x[0], x[1] + d)] for x in p for d in (0, 1)] for p in WP])
+    lb = np.array([sum(lf(x[1] + d) for x in p for d in (0, 1)) for p in BP])
+    lw = np.array([sum(lf(n - 1 - x[1] - d) for x in p for d in (0, 1)) for p in WP])
+    same = np.array([p[0][0] == p[1][0] for p in BP])
+    lZt = -np.inf; lZs = -np.inf; step = max(1, chunk // len(WP))
+    for s in range(0, len(BP), step):
+        e = min(len(BP), s + step); sub = H[rows[None, :, :, None], cols[s:e, None, None, :]]
+        lw_ = np.log(np.abs(np.linalg.det(sub)) + 1e-300) + lb[s:e, None] + lw[None, :]
+        lZt = np.logaddexp(lZt, np.logaddexp.reduce(lw_.ravel()))
+        if same[s:e].any():
+            lZs = np.logaddexp(lZs, np.logaddexp.reduce(lw_[same[s:e]].ravel()))
+    return float(lZt) - 4 * n * math.log(2), math.exp(lZs - lZt)

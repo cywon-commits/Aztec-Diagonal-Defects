@@ -1,0 +1,7 @@
+E0 -284 OPTIMAL
+edge_along_H1V2: dE=4.00 J1  flips=2 (OPTIMAL)  barrier=4.00 J1  annih=0.00 J1
+edge_perp_Hout: dE=4.00 J1  flips=2 (OPTIMAL)  barrier=4.00 J1  annih=0.00 J1
+edge_perp_Vout: dE=2.00 J1  flips=6 (OPTIMAL)  barrier=5.00 J1  annih=3.00 J1
+corner_along: dE=4.00 J1  flips=2 (OPTIMAL)  barrier=4.00 J1  annih=0.00 J1
+corner_perp: dE=4.00 J1  flips=2 (OPTIMAL)  barrier=4.00 J1  annih=0.00 J1
+inner: dE=2.00 J1  flips=6 (OPTIMAL)  barrier=5.00 J1  annih=3.00 J1
